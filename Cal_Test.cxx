@@ -24,6 +24,10 @@
 #include <numeric>
 
 bool InFiducial(double x, double y, double z) {
+	/* 
+		To remove points along the edge of the detector.  Does not remove points 
+		in the deadwire regions, like in the nu_mu and nu_e selections.
+	*/
 	if(x < 0+15 || x > 256.35-15)return 0;
 	if(y < -116.5+15 || y > 116.5-25)return 0;
 	if(z < 0+15 || z > 1036.8-15)return 0;
@@ -31,7 +35,9 @@ bool InFiducial(double x, double y, double z) {
 }
 
 double RecombinationFun(double *x, double *par){
-
+	/*
+		Recombination Function, note not really used in this code -i think-
+	*/
 	double alpha = par[0];
 	double beta = par[1];
 	double C = par[2]; //
@@ -49,7 +55,9 @@ double RecombinationFun(double *x, double *par){
 namespace larlite {
 
 	bool Cal_Test::Initialize() {
-
+		/* 
+			Set detector size, number of bins, recombination parameters and expected function.
+		*/ 
 		xmin = 0.0;	xmax = 256.25;
 		ymin = -116.5; ymax = 116.5;
 		zmin = 0.0; zmax = 1036.8;
@@ -72,12 +80,6 @@ namespace larlite {
         fRecombinationExpected->FixParameter(3, Wion);
         fRecombinationExpected->FixParameter(4,LAr_Density);
         fRecombinationExpected->FixParameter(5,E_Field);
-
-        avgVal = fRecombinationExpected->Eval(2.104);
-
-        //avgCor =  fRecombinationExpected->Eval(2.104) / 11.389267;
-        alpha_fit = 9.22272e-01;
-        beta_fit = 2.80513e-01;
 
 		return true;
 	}
@@ -103,14 +105,10 @@ namespace larlite {
 		TFile f("CalibrationFile.root","RECREATE");
 		TCanvas *c1 = new TCanvas("c1", "c1", 200, 10, 750, 1000);
 		c1->Divide(1,3);
-		//hUncorrecteddQdx->GetZaxis()->SetRangeUser(0,60);
-		//hUncorrecteddQdx_m->GetZaxis()->SetRangeUser(0,30);
-		//hUncorrecteddQdx_p->GetZaxis()->SetRangeUser(0,30);
-		c1->cd(1); hUncorrecteddQdx->Draw("colz");	 //hUncorrecteddQdx->Write();
-		c1->cd(2); hUncorrecteddQdx_m->Draw("colz"); //hUncorrecteddQdx_m->Write();
-		c1->cd(3); hUncorrecteddQdx_p->Draw("colz"); //hUncorrecteddQdx_p->Write();
+		c1->cd(1); hUncorrecteddQdx->Draw("colz");	
+		c1->cd(2); hUncorrecteddQdx_m->Draw("colz"); 
+		c1->cd(3); hUncorrecteddQdx_p->Draw("colz"); 
 		c1->Update();
-		//c1->Print("Uncorrected_dQdx.pdf");
 
 		std::cout << "Step 4" << std::endl;
 		// Make2DCorrectionMap();
@@ -168,62 +166,19 @@ namespace larlite {
 
 		hCorrectionMap3D->Draw("BOX2 Z"); hCorrectionMap3D->Write();
 
-		// TCanvas *c5 = new TCanvas("c5","c5", 200, 10, 750, 300);
-		// c5->cd();
-		// hLowHit1D->Draw();
-
-		// TCanvas *c6 = new TCanvas("c6","c6", 200, 10, 750, 300);
-		// c6->cd();
-		// hLowHit3D->SetLineWidth(0);
-		// hLowHit3D->Draw("BOX2 Z");
-
-		// TCanvas *c3 = new TCanvas("c3", "c3", 200, 10, 750, 1000);
-		// c3->cd();
-		// hLowHit2D->Draw("colz");
-		
-		// TCanvas *c9 = new TCanvas("c9","c9", 200, 10, 750, 300);
-		// c9->cd();
-		// hCosmicdQdx->SetLineColor(2);
-		// hCosmicdQdx->Draw();
-		// hCosmicdQdx_cor->SetLineColor(4);
-		// hCosmicdQdx_cor->Draw("same"); 
-		// hRecoFit->Write();
-		// h5e19_avg->Write();
-		// hAfter_avg->Write();	
-
-
 
 		std::cout << "Hello." << std::endl;
 
 		return true;
 	}
 
-	void Cal_Test::SelectedVertex(int run, int subrun, int event, int vtx_id) {
-        selectedProton = false;
-        selectedCosmic = false;
-        for(size_t i = 0;i<SelectEvtID_cosmic.size();i++){
-            if(run!= SelectEvtID_cosmic[i][0])continue;
-            if(subrun!=SelectEvtID_cosmic[i][1])continue;
-            if(event!=SelectEvtID_cosmic[i][2])continue;
-            if(vtx_id!=SelectEvtID_cosmic[i][3])continue;
-            if((run >= 5119 && run <= 5600) || (run >= 5750 && run <= 5955) ) {selectedCosmic_during=true;}
-            if( run > 5955) {selectedCosmic_after=true;}
-            if(run < 5119) {selectedCosmic_before=true;}
-            selectedCosmic=true;
-        }
-
-        for(size_t i = 0;i<SelectEvtID_proton.size();i++){
-            if(run!= SelectEvtID_proton[i][0])continue;
-            if(subrun!=SelectEvtID_proton[i][1])continue;
-            if(event!=SelectEvtID_proton[i][2])continue;
-            if(vtx_id!=SelectEvtID_proton[i][3])continue;
-            selectedProton=true;
-        }
-
-        return;
-	}
-
 	void Cal_Test::LoadSelectionFiles(std::string file_loc) {
+		/*
+			Takes in NuMuVertexVariables tree (FinalVertexVariables, DLLEE_Vertex_Variables) 
+			and selects all events that pass associated cuts into cosmic or proton like tracks
+			by (run, subrun, event, vtxid) to be used in AllVertexFill.
+			--- needs to be updates for DL Merged files ---
+		*/
 		TFile *fSelection = TFile::Open(Form("%s",file_loc.c_str()),"READ");
 		if(!(fSelection->IsOpen())){
 			std::cout << "ERROR : could not open selection file!" << std::endl;
@@ -267,7 +222,7 @@ namespace larlite {
 	    		info.push_back(vtxid_sel);
 	    		SelectEvtID_cosmic.push_back(info);
 	    	} 
-	    	if (cosmicLL_sel < 3 && TrackLength_v_sel->at(0) > 35 && TrackLength_v_sel->at(1) > 35 && TrackLength_v_sel->at(0)+TrackLength_v_sel->at(1) < 250) {
+	    	if (cosmicLL_sel < 3 && TrackLength_v_sel->at(0) > 35 && TrackLength_v_sel->at(1) > 35 && PassCuts_sel = 1) {
 	    		std::vector<int> info;
 	    		info.push_back(run_sel);
 	    		info.push_back(subrun_sel);
@@ -282,34 +237,47 @@ namespace larlite {
         fSelection->Close();
 	}
 
-	void Cal_Test::LoadDEdxSplines(std::string file_loc) {
+	void Cal_Test::SelectedVertex(int run, int subrun, int event, int vtx_id) {
+		/*
+			Called by AllVertexFill
+			Just determines if the current event is in SelectEvtID_cosmic or 
+			SelectEvtID_proton and changes selectedProton/selectedCosmic value to true.
+			Also contains selectedCosmic_during, _after, _before to look at differences
+			in the EXT from before, during, and after the beam taking window in run1
+			(this functionality is really only used in "add_here")
+		*/
 
-		std::cout << "Load dEdx Splines." << std::endl;
-		TFile *fSplines = TFile::Open(Form("%s",file_loc.c_str()),"READ");
-		sProtonRange2dEdx = (TSpline3*)fSplines->Get("sProtonRange2dEdx");
-		sMuonRange2dEdx = (TSpline3*)fSplines->Get("sMuonRange2dEdx");
-		sProtonRange2T = (TSpline3*)fSplines->Get("sProtonRange2T");
-	}
+        selectedProton = false;
+        selectedCosmic = false;
+        for(size_t i = 0;i<SelectEvtID_cosmic.size();i++){
+            if(run!= SelectEvtID_cosmic[i][0])continue;
+            if(subrun!=SelectEvtID_cosmic[i][1])continue;
+            if(event!=SelectEvtID_cosmic[i][2])continue;
+            if(vtx_id!=SelectEvtID_cosmic[i][3])continue;
+            if((run >= 5119 && run <= 5600) || (run >= 5750 && run <= 5955) ) {selectedCosmic_during=true;}
+            if( run > 5955) {selectedCosmic_after=true;}
+            if(run < 5119) {selectedCosmic_before=true;}
+            selectedCosmic=true;
+        }
 
-	void Cal_Test::LoadCalibrationFile(std::string file_loc) {
-		TFile *fCalibration = TFile::Open(Form("%s",file_loc.c_str()),"READ");
-		if (!(fCalibration->IsOpen())){
-			std::cout << "Error: could not open calibration file" << std::endl;
-		}
-		else std::cout << "Calibration File Opened" << std::endl;
+        for(size_t i = 0;i<SelectEvtID_proton.size();i++){
+            if(run!= SelectEvtID_proton[i][0])continue;
+            if(subrun!=SelectEvtID_proton[i][1])continue;
+            if(event!=SelectEvtID_proton[i][2])continue;
+            if(vtx_id!=SelectEvtID_proton[i][3])continue;
+            selectedProton=true;
+        }
 
-		CorrectionMap3D_Y = (TH3D*)fCalibration->Get("hImageCalibrationMap_02");
-		CorrectionMap3D_U = (TH3D*)fCalibration->Get("hImageCalibrationMap_00");
-		CorrectionMap3D_V = (TH3D*)fCalibration->Get("hImageCalibrationMap_01");
-
-		if (CorrectionMap3D_Y==nullptr) std::cout << "Error, no Correction Map loaded" << std::endl;
-
-
+        return;
 	}
 
 	void Cal_Test::AllVertexFill(storage_manager * mgr) {
 
-		const larlite::event_vertex *vertex_v = (larlite::event_vertex *)mgr->get_data<larlite::event_vertex>("trackReco");
+		/*
+			Saves selected larlite tracks from "trackReco_sceadded" tree to AllVertex_{whatever} 
+		*/
+
+		const larlite::event_vertex *vertex_v = (larlite::event_vertex *)mgr->get_data<larlite::event_vertex>("trackReco_sceadded");
 		run = mgr->run_id();
 		subrun = mgr->subrun_id();
 		event = mgr->event_id();
@@ -349,7 +317,7 @@ namespace larlite {
             	info.push_back(run);
             	info.push_back(subrun);
             	info.push_back(event);
-            	AllVertex_run.push_back(info);
+            	AllVertex_run.push_back(info); // Used in RunInfo
             }
             if(selectedCosmic_before){AllVertex_m_before.push_back(thisVertex);}
 
@@ -357,7 +325,38 @@ namespace larlite {
     	return;
 	}
 
-	void Cal_Test::MakedQdxPlots() {
+	void Cal_Test::LoadDEdxSplines(std::string file_loc) {
+		/*
+		Loads in dE/dx splines from LArCV folders.
+		*/
+
+		std::cout << "Load dEdx Splines." << std::endl;
+		TFile *fSplines = TFile::Open(Form("%s",file_loc.c_str()),"READ");
+		sProtonRange2dEdx = (TSpline3*)fSplines->Get("sProtonRange2dEdx");
+		sMuonRange2dEdx = (TSpline3*)fSplines->Get("sMuonRange2dEdx");
+		sProtonRange2T = (TSpline3*)fSplines->Get("sProtonRange2T");
+	}
+
+	void Cal_Test::LoadCalibrationFile(std::string file_loc) {
+		/*
+		Loads in 3D calibration maps for use in DataGainFactor()
+		*/
+		TFile *fCalibration = TFile::Open(Form("%s",file_loc.c_str()),"READ");
+		if (!(fCalibration->IsOpen())){
+			std::cout << "Error: could not open calibration file" << std::endl;
+		}
+		else std::cout << "Calibration File Opened" << std::endl;
+
+		CorrectionMap3D_Y = (TH3D*)fCalibration->Get("hImageCalibrationMap_02");
+		CorrectionMap3D_U = (TH3D*)fCalibration->Get("hImageCalibrationMap_00");
+		CorrectionMap3D_V = (TH3D*)fCalibration->Get("hImageCalibrationMap_01");
+
+		if (CorrectionMap3D_Y==nullptr) std::cout << "Error, no Correction Map loaded" << std::endl;
+	}
+
+
+
+	void Cal_Test::MakeDQdxMaps() {
 
 		//TFile f("dQdx.root","RECREATE");
 		//TCanvas *c1 = new TCanvas("c1", "c1", 200, 10, 4000, 10000);
@@ -970,7 +969,6 @@ namespace larlite {
 
 		std::cout << "Avg DQdx Map 2D Filled" << std::endl;	
 
-		// avgVal = std::accumulate(totalCount.begin(), totalCount.end(), 0.0) / totalCount.size();
 		// std::sort(totalCount.begin(), totalCount.end());
 		//medVal = 0.0;
 		//if (totalCount.size() % 2 == 1) medVal = totalCount[totalCount.size() / 2];
@@ -1350,7 +1348,6 @@ namespace larlite {
 		}
 
 		// medVal = std::accumulate(totalCount.begin(), totalCount.end(), 0.0) / totalCount.size();
-		//double unfilledVal = avgVal / medVal;
 
 		for (size_t idx {0}; idx < hAvgDQdxMap3D->GetSize(); idx++) {
 			if (hAvgDQdxMap3D->GetBinContent(idx) != 0.0) {

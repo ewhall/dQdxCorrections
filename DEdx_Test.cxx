@@ -497,10 +497,10 @@ namespace larlite {
 			double v_x = AllVertex_p[ivert][0].Vertex().X();
 			double v_y = AllVertex_p[ivert][0].Vertex().Y();
 			double v_z = AllVertex_p[ivert][0].Vertex().Z();
-			//double dr = deltaR(v_x, v_y, v_z, AllTruth_p[ivert]);
+			double dr = deltaR(v_x, v_y, v_z, AllTruth_p[ivert]);
 			bool InFiducial = InFid(v_x, v_y, v_z);
 			double dr = 1;
-			// hdr->Fill(dr);
+			hdr->Fill(dr);
 			// hEnergy->Fill(AllTruth_p[ivert][3]);
 
 
