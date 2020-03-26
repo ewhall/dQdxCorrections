@@ -2,8 +2,6 @@
 #include <iostream>
 #include <fstream>
 
-// void LoadSelectionFile();
-
 int dQdxMap() { 
 	std::string track_file = "/Users/mwhall/Tools/DLLEEdata/MCC9/BNB_EXT/tracker_reco.root";
 	std::string vertex_variables_file = "/Users/mwhall/Tools/DLLEEdata/MCC9/BNB_EXT/dllee_vertex.root";
@@ -21,17 +19,7 @@ int dQdxMap() {
 	    return 1;
 	}
 
-	// TFile *fSelection = TFile::Open(Form("%s",argv[2]),"READ");
-	// if(!(fSelection->IsOpen())){
-	// 	std::cout << "ERROR : could not open selection file!" << std::endl;
- //    }	
- //    std::cout << "selection file opened" << std::endl;
-
- //    TTree *NuMuVertexVariable = (TTree*)fSelection->Get("NuMuVertexVariables");
- //    if(NuMuVertexVariable==nullptr)std::cout << "ERROR, no ttree loaded " << std::endl;
- //    else std::cout << "ttree loaded with " <<NuMuVertexVariable->GetEntries() << " entries" << std::endl;
 	Cal_Test Cal;
-	//Cal.Initialize();
 	Cal.Initialize();
 	Cal.LoadSelectionFiles(vertex_variables_file);
 	int ievt {0};
@@ -43,33 +31,11 @@ int dQdxMap() {
 		x++;
 	}
 
-	//Cal.RunInfo();
-	//Cal.LookAtX();
-	//Cal.LookAtZ();
-	Cal.LoadDEdxSplines(spline_file);
-	Cal.MakedQdxPlots();
-	Cal.Make2DCorrectionMap();
-	Cal.Finalize();
-	// Cal.Make2DCorrectionMap();
-	//Cal.ImageCorrectionMap();
+	Cal.ImageCorrectionMap();
 
 
 
 
 
-	// while (mgr.next_event()) {
-	// 	const larlite::event_track *track = (larlite::event_track*)mgr.get_data<larlite::event_track>("trackReco");
-	// 	const larlite::vertex *vertex = (larlite::event_vertex*)mgr.get_data<larlite::event_vertex>("trackReco");
-	// 	int run = mgr.run_id();
-	// 	int run = mgr.subrun_id();
-	// 	int event = mgr.event_id();
-
-	// 	for(size_t vtx_idx {0}; vtx_idx < vertex->size(); vtx_idx++) {
-
-	// 	}
-
-	// 	int size = track->size();
-
-	// 	}
 	return 0;
 	}
