@@ -606,6 +606,11 @@ namespace larlite {
 
 	void Cal_Test::ImageCorrectionMap() {
 
+		/*
+		Takes selected cosmics and creates calibration maps in x,y,z
+		*/	
+
+		//creating some variables, edit Xbin, Ybin, Zbin to change map binning size
 		int Xbin{50}, Ybin{50}, Zbin{250};
 		larlite::geo::View_t views[3];
 		views[0] = larlite::geo::kU;
@@ -624,7 +629,6 @@ namespace larlite {
 		
 		hXBins = new TH1D("hXBins","hXBins",Xbin,xmin,xmax);
 
-		std::cout << "Debug 1" << std::endl;
 		for (int planes {0}; planes < 3; planes++) {
 			h2DImageHitMap[planes+1] = new TH2D(Form("h2DImageHitMap_%02d",planes),Form("h2DImageHitMap_%02d",planes),Ybin,ymin,ymax,Zbin,zmin,zmax);
 			h2DImageHitMap_ZY[planes+1] = new TH2D(Form("h2DImageHitMap_ZY_%02d",planes),Form("h2DImageHitMap_ZY_%02d",planes),Zbin,zmin,zmax,Ybin,ymin,ymax);
@@ -640,7 +644,9 @@ namespace larlite {
 			fillBin_ZY[planes].resize(h2DImageHitMap_ZY[planes+1]->GetSize());
 		}	
 		
-		std::cout << "Debug 2" << std::endl;
+		//Looping through all the selected tracks and adding there dqdx value to 3d location
+		//note: simply uses two histograms, a total charge and a hit number, average dqdx for a bin
+		// is the total charge divided by the hit number
 
 		for (size_t ivert{0}; ivert < AllVertex_m.size(); ivert++) {
 			for (size_t itrack{0}; itrack < AllVertex_m[ivert].size(); itrack++) {
@@ -678,7 +684,7 @@ namespace larlite {
 		TCanvas *cADCfit = new TCanvas("cADCfit","cADCfit",250,800);
 		cADCfit->Divide(1,3);
 
-		std::cout << "Debug 3" << std::endl;
+		// plotting stuff
 		for (int planes{0}; planes < 3; planes++) {
 			double rms = h2DTotalCount[planes+1]->GetRMS();
 			double mean = h2DTotalCount[planes+1]->GetMean();
@@ -695,6 +701,7 @@ namespace larlite {
 			h2DTotalCount[planes+1]->Draw();
 			//f1->Draw("same");
 		}
+
 
 		TCanvas *cADC = new TCanvas("cADC","",500,400);
 		cADC->cd();
@@ -752,6 +759,9 @@ namespace larlite {
 
 		cCalMap->Divide(1,3);
 		cAvgCalMap->Divide(1,3);
+
+		// making the calibration map 
+
 		for (size_t idx {0}; idx < h2DImageHitMap[1]->GetSize(); idx++) {
 			for (int planes{0}; planes < 3; planes++) {
 				if (h2DImageHitMap[planes+1]->GetBinContent(idx) < 5) {
@@ -768,6 +778,8 @@ namespace larlite {
 				}
 			}
 		}
+
+		// more plotting 
 
 		TCanvas *plane0 = new TCanvas("plane0","plane0",700,450);
 		TCanvas *plane1 = new TCanvas("plane1","plane1",700,450);
@@ -849,6 +861,8 @@ namespace larlite {
 				}
 			}
 		}
+
+		// saving calibration maps
 		TFile f("CalibrationMaps.root","RECREATE");
 		hImageCalibrationMap[1]->Write();
 		hImageCalibrationMap[2]->Write();
