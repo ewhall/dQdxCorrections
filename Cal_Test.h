@@ -34,7 +34,7 @@ namespace larlite {
 		void LoadSelectionFiles(std::string file_loc);
 		void AllVertexFill(storage_manager * mgr);
 		void SelectedVertex(int run, int subrun, int event, int vtx_id);
-		void MakeDQdxMaps();
+		void MakeDQdxPlots();
 		void MakeCorrecteddQdxPlots();
 		void Make2DCorrectionMap();
 		void MakeXCorrectionMap();

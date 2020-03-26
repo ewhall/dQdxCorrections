@@ -356,7 +356,7 @@ namespace larlite {
 
 
 
-	void Cal_Test::MakeDQdxMaps() {
+	void Cal_Test::MakedQdxPlots() {
 
 		//TFile f("dQdx.root","RECREATE");
 		//TCanvas *c1 = new TCanvas("c1", "c1", 200, 10, 4000, 10000);
