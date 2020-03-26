@@ -198,18 +198,18 @@ namespace larlite {
 		NuMuVertexVariable->SetBranchAddress("event",&event_sel);
 		NuMuVertexVariable->SetBranchAddress("vtxid",&vtxid_sel);
 
-	    NuMuVertexVariable->SetBranchAddress("InFiducial",&InFiducial_sel);
-	    NuMuVertexVariable->SetBranchAddress("Good3DReco",&goodReco_sel);
-	    NuMuVertexVariable->SetBranchAddress("N5cmTracks",&N5cmTracks_sel);
-		NuMuVertexVariable->SetBranchAddress("TrackLength_v",&TrackLength_v_sel);
-		NuMuVertexVariable->SetBranchAddress("CosmicLL",&cosmicLL_sel);
-		NuMuVertexVariable->SetBranchAddress("PassCuts",&PassCuts_sel);
+	    //NuMuVertexVariable->SetBranchAddress("InFiducial",&InFiducial_sel);
+	    NuMuVertexVariable->SetBranchAddress("Reco_goodness_v",&goodReco_sel);
+	    NuMuVertexVariable->SetBranchAddress("NtracksReco",&N5cmTracks_sel);
+		NuMuVertexVariable->SetBranchAddress("Length_v",&TrackLength_v_sel);
+		NuMuVertexVariable->SetBranchAddress("possibleCosmic",&cosmicLL_sel);
+		//NuMuVertexVariable->SetBranchAddress("PassCuts",&PassCuts_sel);
 
 
 	    for (Long64_t i = 0; i < NuMuVertexVariable->GetEntries();i++) { 
 	    	NuMuVertexVariable->GetEntry(i);
 	    	//std::cout << "pass" << std::endl;
-	    	if (InFiducial_sel != 1 || goodReco_sel == 0 || N5cmTracks_sel != 2 || TrackLength_v_sel->size() != 2) continue;
+	    	if (goodReco_sel == 0 || N5cmTracks_sel != 2 || TrackLength_v_sel->size() != 2) continue;
 	    	//std::cout << InFiducial_sel << std::endl;
 	    	if (TrackLength_v_sel->at(0) > 35 && TrackLength_v_sel->at(1) > 35 
 	    		&& TrackLength_v_sel->at(0)+TrackLength_v_sel->at(1) > 200
@@ -222,7 +222,7 @@ namespace larlite {
 	    		info.push_back(vtxid_sel);
 	    		SelectEvtID_cosmic.push_back(info);
 	    	} 
-	    	if (cosmicLL_sel < 3 && TrackLength_v_sel->at(0) > 35 && TrackLength_v_sel->at(1) > 35 && PassCuts_sel = 1) {
+	    	if (cosmicLL_sel < 3 && TrackLength_v_sel->at(0) > 35 && TrackLength_v_sel->at(1) > 35) { //} && PassCuts_sel = 1) {
 	    		std::vector<int> info;
 	    		info.push_back(run_sel);
 	    		info.push_back(subrun_sel);
